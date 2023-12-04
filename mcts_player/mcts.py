@@ -65,6 +65,7 @@ class TreeNode:
         """
         _child = None
         _uct_val = -1
+        # print(self.children.items())
         for move, child in self.children.items():
             if child.n_visits == 0:
                 return child.move, child
@@ -123,8 +124,6 @@ class MCTS:
         # and len(board.get_empty_points()) == 0
         while not node.is_leaf() :
             move, next_node = node.select_in_tree(self.exploration)
-            #print(move)
-            #print(GoBoardUtil.get_twoD_board(board))
             assert board.play_move(move, color)
             color = opponent(color)
             node = next_node
@@ -157,6 +156,7 @@ class MCTS:
 
         for _ in range(num_simulation*len(self.root.children)):
             cboard = board.copy()
+            # print(board.get_empty_points())
             self.search(cboard, color)
         # choose a move that has the most visit
         best_move, best_child = self.root.select_best_child()
