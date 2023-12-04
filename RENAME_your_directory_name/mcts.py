@@ -123,8 +123,8 @@ class MCTS:
         # and len(board.get_empty_points()) == 0
         while not node.is_leaf() :
             move, next_node = node.select_in_tree(self.exploration)
-            print(move)
-            print(GoBoardUtil.get_twoD_board(board))
+            #print(move)
+            #print(GoBoardUtil.get_twoD_board(board))
             assert board.play_move(move, color)
             color = opponent(color)
             node = next_node
