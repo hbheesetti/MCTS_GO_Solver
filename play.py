@@ -1,12 +1,12 @@
 import pexpect
 
 #Change the paths here to test different players
-player1='random_player/Ninuki-random.py'
+player1='ab_player/Ninuki-ab.py'
 player2='mcts_player/Ninuki.py'
 
 #Change the timeout to test different time limits
 #We will use a 60 second timeout for testing your submission
-timeout=1
+timeout=5
 
 #Change the number of games played by the script
 numGames = 10
@@ -62,6 +62,7 @@ def playSingleGame(alternative=False):
                 result=1
                 break
             elif move=='timeout':
+                print("timeout")
                 result=1
                 break
             playMove(p1,'w',move)
