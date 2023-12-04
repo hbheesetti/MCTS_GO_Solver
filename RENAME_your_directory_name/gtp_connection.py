@@ -14,6 +14,8 @@ import re
 import time
 from sys import stdin, stdout, stderr
 from typing import Any, Callable, Dict, List, Tuple
+from mcts import MCTS
+from chatgpt import mcts
 
 from board_base import (
     BLACK,
@@ -46,7 +48,7 @@ class GtpConnection:
         self.time_limit = 1
         self.solve_start_time = 0
         self.best_move = None
-
+        self.mcts = MCTS()
         self._debug_mode: bool = debug_mode
         self.engine = engine
         self.board: GoBoard = board
@@ -359,9 +361,10 @@ class GtpConnection:
         """ 
         Modify this function for Assignment 2.
         """
-
         board_color = args[0].lower()
-        self.play_cmd([board_color, self.engine.get_move(self.board, board_color), 'print_move'])
+        color = color_to_int(board_color)
+        move = self.mcts.get_move(self.board, color, 10, 0.9)
+        self.respond(point_to_coord(move,7))
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
@@ -386,7 +389,7 @@ def point_to_coord(point: GO_POINT, boardsize: int) -> Tuple[int, int]:
         return (PASS, PASS)
     else:
         NS = boardsize + 1
-        return divmod(point, NS)
+        return format_point(divmod(point, NS))
 
 
 def format_point(move: Tuple[int, int]) -> str:

@@ -253,7 +253,6 @@ class GoBoard(object):
                     num_found += 1
                 if num_found >= 5:
                     return c
-        
         return EMPTY
     
     def detect_five_in_a_row(self) -> GO_COLOR:
@@ -277,10 +276,9 @@ class GoBoard(object):
                 num_found += 1
             if num_found >= 5:
                 return c
-        
         return EMPTY
 
-    def is_terminal(self):
+    def get_result(self):
         """
         Returns: is_terminal, winner
         If the result is a draw, winner = EMPTY
@@ -296,6 +294,15 @@ class GoBoard(object):
             return True, EMPTY
         else:
             return False, EMPTY
+        
+    def is_terminal(self):
+        winner = self.detect_five_in_a_row()
+        if winner != EMPTY:
+            return True
+        elif self.end_of_game():
+            return True
+        else:
+            return False
 
     def heuristic_eval(self):
         """
