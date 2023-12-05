@@ -299,7 +299,7 @@ class GoBoard(object):
         else:
             return False, EMPTY
         
-    def get_result__(self):
+    def get_result_number(self):
         """
         Returns: is_terminal, winner
         If the result is a draw, winner = EMPTY
@@ -310,7 +310,7 @@ class GoBoard(object):
         elif winner == WHITE or self.get_captures(WHITE) >= 10:
             return -10000
         elif self.end_of_game():
-            return True, EMPTY
+            return 0
         else:
             return False, EMPTY
 

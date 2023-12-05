@@ -17,6 +17,8 @@ import numpy as np
 import os, sys
 from typing import Dict, List, Tuple
 
+from feature_moves import FeatureMoves
+
 def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float) -> float:
     return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)
 
@@ -139,8 +141,24 @@ class MCTS:
             print(node.level)
         
         assert board.current_player == color
-        winner = board.is_terminal()
+        winner = self.rollout(board, color)
         node.update(winner)
+
+    def rollout(self, board: GoBoard, color: GO_COLOR) -> GO_COLOR:
+        """
+        Use the rollout policy to play until the end of the game, returning the winner of the game
+        +1 if black wins, +2 if white wins, 0 if it is a tie.
+        """
+        winner = FeatureMoves.playGame(
+            board,
+            color,
+            # komi=self.komi,
+            # limit=self.limit,
+            # random_simulation=self.simulation_policy,
+            # use_pattern=self.use_pattern,
+            # check_selfatari=self.check_selfatari,
+        )
+        return winner
     
     def get_move(
         self,
