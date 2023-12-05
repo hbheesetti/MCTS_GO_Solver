@@ -299,7 +299,7 @@ class GoBoard(object):
         else:
             return False, EMPTY
         
-    def get_result__(self):
+    def get_result_number(self):
         """
         Returns: is_terminal, winner
         If the result is a draw, winner = EMPTY
