@@ -15,6 +15,7 @@ import time
 from sys import stdin, stdout, stderr
 from typing import Any, Callable, Dict, List, Tuple
 from mcts import MCTS
+from chatgpt import mcts
 
 from board_base import (
     BLACK,
@@ -362,7 +363,7 @@ class GtpConnection:
         """
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.mcts.get_move(self.board, color, 10, 1.41)
+        move = self.mcts.get_move(self.board, color, 10, 100)
         self.respond(point_to_coord(move,7).lower())
     
     def timelimit_cmd(self, args: List[str]) -> None:

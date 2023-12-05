@@ -299,6 +299,21 @@ class GoBoard(object):
         else:
             return False, EMPTY
         
+    def get_result__(self):
+        """
+        Returns: is_terminal, winner
+        If the result is a draw, winner = EMPTY
+        """
+        winner = self.detect_five_in_a_row()
+        if winner == BLACK or self.get_captures(BLACK) >= 10:
+            return 10000  
+        elif winner == WHITE or self.get_captures(WHITE) >= 10:
+            return -10000
+        elif self.end_of_game():
+            return True, EMPTY
+        else:
+            return False, EMPTY
+
     def is_terminal(self):
         winner = self.detect_five_in_a_row()
         if winner != EMPTY:

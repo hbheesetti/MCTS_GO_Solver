@@ -10,6 +10,7 @@ and the search itself in class MCTS
 from board_base import opponent, BLACK, WHITE, PASS, GO_COLOR, GO_POINT, NO_POINT, coord_to_point
 from board import GoBoard
 from board_util import GoBoardUtil
+import random
 # from gtp_connection import point_to_coord, format_point
 
 import numpy as np
@@ -32,6 +33,7 @@ class TreeNode:
         self.parent: 'TreeNode' = self
         self.children: Dict[TreeNode] = {}
         self.expanded: bool = False
+        self.level: int = 0
     
     def set_parent(self, parent: 'TreeNode') -> None:
         self.parent: 'TreeNode' = parent
@@ -48,13 +50,14 @@ class TreeNode:
                 node.move = move
                 node.set_parent(self)
                 self.children[move] = node
+                node.level = self.parent.level + 1
         node = TreeNode(opp_color)
         node.move = PASS
         node.set_parent(self)
         self.children[PASS] = node
         self.expanded = True
     
-    def select_in_tree(self, exploration: float, legal_moves) -> Tuple[GO_POINT, 'TreeNode']:
+    def select_in_tree(self, exploration: float) -> Tuple[GO_POINT, 'TreeNode']:
         """
         Select move among children that gives maximizes UCT. 
         If number of visits are zero for a node, value for that node is infinite, so definitely will get selected
@@ -65,23 +68,25 @@ class TreeNode:
         """
         _child = None
         _uct_val = -1
+        # print(self.children.items())
         for move, child in self.children.items():
-            if move in legal_moves:
-                if child.n_visits == 0:
-                    return child.move, child
-                uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration)
-                if uct_val > _uct_val:
-                    _uct_val = uct_val
-                    _child = child
+            if child.n_visits == 0:
+                return child.move, child
+            uct_val = uct(child.n_opp_wins, child.n_visits, self.n_visits, exploration)
+            if uct_val > _uct_val:
+                _uct_val = uct_val
+                _child = child
         return _child.move, _child
     
     def select_best_child(self) -> Tuple[GO_POINT, 'TreeNode']:
         _n_visits = -1
         best_child = None
+        list = []
         for move, child in self.children.items():
-            if child.n_visits > _n_visits:
+            if child.n_visits >= _n_visits:
                 _n_visits = child.n_visits
-                best_child = child
+                list.append(child)
+        best_child = random.choice(list)
         return best_child.move, best_child
     
     def update(self, winner: GO_COLOR) -> None:
@@ -109,7 +114,7 @@ class MCTS:
     def search(self, board: GoBoard, color: GO_COLOR) -> None:
         """
         Run a single playout from the root to the given depth, getting a value at the leaf and
-        propagating it back through its parents. State is modified in-place, so a copy must be
+        propagating it back through its parents. State is modified in-place, so a copy must be*
         provided.
         Arguments:
         board -- a copy of the board.
@@ -119,13 +124,19 @@ class MCTS:
         # This will be True olny once for the root
         if not node.expanded:
             node.expand(board, color)
+        # print("children", node.children)
+        # print("points", board.get_empty_points())
+        # and len(board.get_empty_points()) == 0
         while not node.is_leaf() :
-            move, next_node = node.select_in_tree(self.exploration, board.get_empty_points())
+            move, next_node = node.select_in_tree(self.exploration)
             assert board.play_move(move, color)
             color = opponent(color)
             node = next_node
         if not node.expanded:
             node.expand(board, color)
+
+        if node.is_leaf():
+            print(node.level)
         
         assert board.current_player == color
         winner = board.is_terminal()
@@ -151,13 +162,15 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        for _ in range(num_simulation*len(self.root.children)):
+        for _ in range(num_simulation*len(self.root.children)*10):
             cboard = board.copy()
+            # print(board.get_empty_points())
             self.search(cboard, color)
         # choose a move that has the most visit
+        for i in self.root.children:
+            print(i, self.root.children[i].n_visits)
         best_move, best_child = self.root.select_best_child()
-        board.play_move(best_child.move, color)
-        return best_child.move
+        return best_move
     
     def update_with_move(self, last_move: GO_POINT) -> None:
         """
