@@ -213,9 +213,9 @@ class MCTS:
         sys.stderr.flush()
 
 def winner(score) -> GO_COLOR:
-    if score< 0:
+    if score > 0:
         return BLACK
-    elif score > 0:
+    elif score < 0:
         return WHITE
     else:
         return 0

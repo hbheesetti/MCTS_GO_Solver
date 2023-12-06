@@ -360,6 +360,46 @@ class GoBoard(object):
         else:
             return False, EMPTY
         
+    def staticallyEvaluateForToPlay(self) :
+        captures = 0
+        opp_captures = 0
+
+        if(self.current_player == BLACK):
+            captures = self.black_captures
+            opp_captures = self.white_captures
+        else:
+            captures = self.white_captures
+            opp_captures = self.black_captures
+
+        if self.detect_five_in_a_row() == self.current_player or captures == 10:
+            score = 100000000000
+        elif self.detect_five_in_a_row() == opponent(self.current_player) or opp_captures == 10:
+            score = -100000000000
+        elif len(self.get_empty_points()) == 0:
+            score = 0
+        elif self.detect_five_in_a_row() == EMPTY:
+            score = self.get_HeuristicScore()
+        return score
+    
+    def get_HeuristicScore(self):
+        score = 0
+        opp = opponent(self.current_player)
+        lines = self.rows + self.cols + self.diags
+        for line in lines:
+            for i in range(len(line) - 5):
+                currentPlayerCount = 0
+                opponentCount = 0
+                # count the number of stones on each five-line
+                for p in line[i:i + 5]:
+                    if self.board[p] == self.current_player:
+                        currentPlayerCount += 1
+                    elif self.board[p] == opp:
+                        opponentCount += 1
+                # Is blocked
+                if currentPlayerCount < 1 or opponentCount < 1:
+                    score += 10 ** currentPlayerCount - 10 ** opponentCount
+        return score
+        
     def detect_n_in_row(self):
         # Checks for a group of n stones in the same direction on the board.
         b5 = []
@@ -391,9 +431,9 @@ class GoBoard(object):
         captureBlocks_white = self.getCaptureBlocks(
                 wblocks, lines, current_color)
         
-        score = -len(wins)*10000000000 + len(blocks)*1000000000 - len(captureBlocks_black)*100 + len(captureBlocks_white)*100 - len(bfour)*10000 + len(cap_4b)*100 - len(cap_4w)*100
+        score = len(wins)*10000000000 - len(blocks)*1000000000 + len(bfour)*10000 - len(wfour)*10000 + len(cap_4b)*10 - len(cap_4w)*10
         # print(score)
-        return score
+        return score + self.staticallyEvaluateForToPlay()
 
     def getCaptureBlocks(self, opponent_fives, lines, cur_col):
         capturable = []
