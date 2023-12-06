@@ -6,10 +6,10 @@ player2='mcts_player/Ninuki.py'
 
 #Change the timeout to test different time limits
 #We will use a 60 second timeout for testing your submission
-timeout=5
+timeout=60
 
 #Change the number of games played by the script
-numGames = 10
+numGames = 1
 
 win1=0
 win2=0
@@ -62,13 +62,13 @@ def playSingleGame(alternative=False):
                 result=1
                 break
             elif move=='timeout':
-                print("timeout")
+                #print("timeout")
                 result=1
                 break
             playMove(p1,'w',move)
             playMove(ob,'w',move)
         sw=1-sw
-        print(move)
+        #print(move)
         ob.sendline('gogui-rules_final_result')
         ob.expect(['= black','= white','= draw','= unknown'])
         status=ob.after.decode("utf-8")[2:]

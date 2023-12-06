@@ -18,6 +18,15 @@ import os, sys
 from typing import Dict, List, Tuple
 
 from feature_moves import FeatureMoves
+import signal
+
+def handler(s, f):
+        raise TimeoutError("timedout")
+def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
+    
+    class TimeoutError(Exception):
+        pass
+
 
 def uct(child_wins: int, child_visits: int, parent_visits: int, exploration: float) -> float:
     return child_wins / child_visits + exploration * np.sqrt(np.log(parent_visits) / child_visits)
@@ -167,23 +176,38 @@ class MCTS:
         """
         Runs all playouts sequentially and returns the most visited move.
         """
-        if self.toplay != color:
-            sys.stderr.write("Tree is for wrong color to play. Deleting.\n")
-            sys.stderr.flush()
-            self.toplay = color
-            self.root = TreeNode(color)
-        self.exploration = exploration
 
-        if not self.root.expanded:
-            self.root.expand(board, color)
+        def handler(signum, frame):
+            raise TimeoutError()
+        best_move = random.choice(board.get_empty_points())
+        try:
+            signal.signal(signal.SIGALRM, handler) 
+            signal.alarm(int(55))
+            if self.toplay != color:
+                sys.stderr.write("Tree is for wrong color to play. Deleting.\n")
+                sys.stderr.flush()
+                self.toplay = color
+                self.root = TreeNode(color)
+            self.exploration = exploration
 
-        for _ in range(num_simulation*len(self.root.children)*10):
-            cboard = board.copy()
-            # print(board.get_empty_points())
-            self.search(cboard, color)
-        # choose a move that has the most visit
-        best_move, best_child = self.root.select_best_child()
-        return best_move
+            if not self.root.expanded:
+                self.root.expand(board, color)
+
+            for _ in range(num_simulation*len(self.root.children)*10):
+                cboard = board.copy()
+                # print(board.get_empty_points())
+                self.search(cboard, color)
+            # choose a move that has the most visit
+            best_move, best_child = self.root.select_best_child()
+            
+        except Exception as e:
+            #print("out of time")
+            best_move = random.choice(board.get_empty_points())
+        finally:
+            return best_move
+
+        
+        
     
     def update_with_move(self, last_move: GO_POINT) -> None:
         """

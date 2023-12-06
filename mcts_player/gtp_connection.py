@@ -15,7 +15,6 @@ import time
 from sys import stdin, stdout, stderr
 from typing import Any, Callable, Dict, List, Tuple
 from mcts import MCTS
-from chatgpt import mcts
 
 from board_base import (
     BLACK,
