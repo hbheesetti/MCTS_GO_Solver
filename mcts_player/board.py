@@ -368,12 +368,13 @@ class GoBoard(object):
         cap_for_b = []
         cap_for_w = []
         _ = []
-        blocks_of_opponent_fives = []
+        bblocks = []
+        wblocks = []
         blocks_of_captures = []
         lines = self.rows + self.cols + self.diags
         current_color = self.current_player
         for r in lines:
-            w5, b5, four, cap_4w, cap_4b, blocks_of_opponent_fives, cap_black, cap_white  = self.has_n_in_list(r, current_color)
+            w5, b5, four, cap_4w, cap_4b, bblocks, wblocks, cap_black, cap_white  = self.has_n_in_list(r, current_color)
 
         wins = b5
         blocks = w5
@@ -381,8 +382,14 @@ class GoBoard(object):
         for x in cap_for_w:
             if cap_for_w.count(x)*2 + self.white_captures >= 10:
                 blocks += [x]
+
+        # prob need to switch out current_colour for smth else
         captureBlocks_black = self.getCaptureBlocks(
-                blocks_of_opponent_fives, lines, current_color)
+                bblocks, lines, current_color)
+        
+        captureBlocks_black = self.getCaptureBlocks(
+                wblocks, lines, current_color)
+        
         score = -len(wins)*10000000 + len(blocks)*10000000 - len(captureBlocks_black)*100 - len(four)*500 - len(captures)*10
         # print(score)
         return score
@@ -447,7 +454,8 @@ class GoBoard(object):
         cap_white = []
         # list of stones captured by black vvvv
         cap_black = []
-        blocks_of_opponent_fives = []
+        bblock = []
+        wblock = []
         for i in range(1, len(list)):
             color = self.get_color(list[i])
             if color == prev:
@@ -474,8 +482,8 @@ class GoBoard(object):
             if (prev != EMPTY and prev != BORDER and (i+1 >= len(list) or self.get_color(list[i+1]) != color)):
                 # print("at end of board?", i, counter)
                 if (counter >= 4):
-                    w5, b5, blocks_of_opponent_fives = self.five_space(
-                        w5, b5, gap_spot, list, i, color, blocks_of_opponent_fives, current_color)
+                    w5, b5, bblock,wblock = self.five_space(
+                        w5, b5, gap_spot, list, i, color, bblock, wblock, counter)
                     
                     # cap_block = self.capture_block(gap_spot,four_colour,list,i)
                 # only get fours if there are no fives and the color is correct
@@ -553,46 +561,56 @@ class GoBoard(object):
         #     cap_4w = cap_4b+cap_4w
         # if self.white_captures == 8:
         #     cap_4b = cap_4w+cap_4b
-        return [w5, b5, four, cap_4w, cap_4b, blocks_of_opponent_fives, cap_black, cap_white]
+        return [w5, b5, four, cap_4w, cap_4b, bblock, wblock, cap_black, cap_white]
 
 
-    def five_space(self, w, b, empty, list, i, block):
+    def five_space(self, w, b, empty, list, i, color, bblock, wblock,counter):
             # if there is an empty space append it is the space that completes the block
-        bblock = []
-        wblock = []
-        if (empty > 0):
-            b.append(list[empty])
-            temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
-            if (list[empty] in temp):
-                temp.remove(list[empty])
-            # temp.remove(list[empty])
-            # temp.append(list[i-4])
-            bblock.append(temp)
-            return [w,b,block]
-        # if there is an empty space before or after the block add them 
-        if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
-            b.append(list[i+1])
-        if (i-4 >= 0 and self.board[list[i-4]] == EMPTY):
-            b.append(list[i-4])
-        if(len(b) > 0):
-            bblock.append([list[i], list[i-1], list[i-2], list[i-3]])
-        
-        
-        if(empty > 0):
-            # if there is an empty space append it is the space that completes the block
-            temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
-            if (list[empty] in temp):
-                temp.remove(list[empty])
-            #temp.append(list[i-4])
-            wblock.append(temp)
-            return [w,b,block]
-        # if there is an empty space before or after the block add them 
-        if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
-            w.append(list[i+1])
-        if(i-4 >= 0 and self.board[list[i-4]] == EMPTY):
-            w.append(list[i-4]) 
-        if(len(w) > 0):
-            wblock.append([list[i], list[i-1], list[i-2], list[i-3]])
+        if(color == BLACK):
+            if (empty > 0):
+                b.append(list[empty])
+                temp = []
+                for j in range(0,counter):
+                    temp.append(list[i-j])
+                #temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
+                if (list[empty] in temp):
+                    temp.remove(list[empty])
+
+                bblock.append(temp)
+                return [w,b,bblock,wblock]
+            # if there is an empty space before or after the block add them
+            btemp = []
+            if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
+                btemp.append(list[i+1])
+            if (i-4 >= 0 and self.board[list[i-4]] == EMPTY):
+                btemp.append(list[i-4])
+            if(len(btemp) > 0):
+                bblock.append([list[i], list[i-1], list[i-2], list[i-3]])
+            b += btemp
+
+        elif(color == WHITE):
+            if(empty > 0):
+                # if there is an empty space append it is the space that completes the block
+                w.append(empty)
+                temp = []
+                for j in range(0,counter):
+                    temp.append(list[i-j])
+
+                #temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
+                if (list[empty] in temp):
+                    temp.remove(list[empty])
+
+                wblock.append(temp)
+                return [w,b,bblock,wblock]
+            # if there is an empty space before or after the block add them 
+            wtemp = []
+            if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
+                wtemp.append(list[i+1])
+            if(i-4 >= 0 and self.board[list[i-4]] == EMPTY):
+                wtemp.append(list[i-4]) 
+            if(len(wtemp) > 0):
+                wblock.append([list[i], list[i-1], list[i-2], list[i-3]])
+            w += wtemp
 
         return [w, b, bblock, wblock]
 
@@ -652,3 +670,8 @@ class GoBoard(object):
         state += str(self.black_captures)
         state += str(self.white_captures)
         return state
+
+if(__name__ == "__main__"):
+    board = GoBoard(7)
+    score = board.detect_n_in_row()
+    print(score)
