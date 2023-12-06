@@ -92,6 +92,7 @@ class TreeNode:
             elif child.n_visits == _n_visits:
                 list.append(child)
         print(list)
+        print(_n_visits)
         best_child = random.choice(list)
         return best_child.move, best_child
     
@@ -176,7 +177,7 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        for _ in range(num_simulation*len(self.root.children)*100):
+        for _ in range(num_simulation*len(self.root.children)*10):
             cboard = board.copy()
             # print(board.get_empty_points())
             self.search(cboard, color)
@@ -212,9 +213,9 @@ class MCTS:
         sys.stderr.flush()
 
 def winner(score) -> GO_COLOR:
-    if score > 0:
+    if score< 0:
         return BLACK
-    elif score < 0:
+    elif score > 0:
         return WHITE
     else:
         return 0

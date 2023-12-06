@@ -387,10 +387,10 @@ class GoBoard(object):
         captureBlocks_black = self.getCaptureBlocks(
                 bblocks, lines, current_color)
         
-        captureBlocks_black = self.getCaptureBlocks(
+        captureBlocks_white = self.getCaptureBlocks(
                 wblocks, lines, current_color)
         
-        score = -len(wins)*10000000 + len(blocks)*10000000 - len(captureBlocks_black)*100 - len(four)*500 - len(captures)*10
+        score = -len(wins)*10000000000 + len(blocks)*1000000000 - len(captureBlocks_black)*100 + len(captureBlocks_white)*100 - len(four)*10000 + len(cap_4b)*100 - len(cap_4w)*100
         # print(score)
         return score
 
