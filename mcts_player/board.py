@@ -364,17 +364,18 @@ class GoBoard(object):
         # Checks for a group of n stones in the same direction on the board.
         b5 = []
         w5 = []
-        four = []
         cap_for_b = []
         cap_for_w = []
         _ = []
         bblocks = []
         wblocks = []
         blocks_of_captures = []
+        bfour = []
+        wfour = []
         lines = self.rows + self.cols + self.diags
         current_color = self.current_player
         for r in lines:
-            w5, b5, four, cap_4w, cap_4b, bblocks, wblocks, cap_black, cap_white  = self.has_n_in_list(r, current_color)
+            w5, b5, bfour, wfour, cap_4w, cap_4b, bblocks, wblocks, cap_black, cap_white  = self.has_n_in_list(r, current_color)
 
         wins = b5
         blocks = w5
@@ -390,7 +391,7 @@ class GoBoard(object):
         captureBlocks_white = self.getCaptureBlocks(
                 wblocks, lines, current_color)
         
-        score = -len(wins)*10000000000 + len(blocks)*1000000000 - len(captureBlocks_black)*100 + len(captureBlocks_white)*100 - len(four)*10000 + len(cap_4b)*100 - len(cap_4w)*100
+        score = -len(wins)*10000000000 + len(blocks)*1000000000 - len(captureBlocks_black)*100 + len(captureBlocks_white)*100 - len(bfour)*10000 + len(cap_4b)*100 - len(cap_4w)*100
         # print(score)
         return score
 
@@ -443,11 +444,12 @@ class GoBoard(object):
         """
         prev = self.get_color(list[0])
         counter = 1
-        gap_spot = 0
+        gap_spot = -1
         before_gap_counter = 0
         b5 = []
         w5 = []
-        four = []
+        wfour = []
+        bfour = []
         cap_4b = []
         cap_4w = []
         # list of stones captured by white vvvv
@@ -461,7 +463,7 @@ class GoBoard(object):
             if color == prev:
                 # Matching stone
                 counter += 1
-            elif (gap_spot == 0 and color == EMPTY):
+            elif (gap_spot == -1 and color == EMPTY):
                 # there is a potential gap
                 gap_spot = i
                 before_gap_counter = counter  # store the number of stones before the gap
@@ -476,19 +478,24 @@ class GoBoard(object):
                 else:
                     before_gap_counter = 0
                     counter = 1
-                    gap_spot = 0
+                    gap_spot = -1
                     prev = color
             # if at the end of the board or there has been a colour change get the empty spaces
             if (prev != EMPTY and prev != BORDER and (i+1 >= len(list) or self.get_color(list[i+1]) != color)):
                 # print("at end of board?", i, counter)
                 if (counter >= 4):
-                    w5, b5, bblock,wblock = self.five_space(
-                        w5, b5, gap_spot, list, i, color, bblock, wblock, counter)
+                    if(color == BLACK):
+                        b5, bblock = self.five_space(b5,gap_spot,list,i, bblock, counter)
+                    elif(color == WHITE):
+                        w5, wblock = self.five_space(w5,gap_spot,list,i,wblock,counter)
                     
                     # cap_block = self.capture_block(gap_spot,four_colour,list,i)
                 # only get fours if there are no fives and the color is correct
                 elif (counter == 3 and color == current_color):
-                    four = self.four_space(four, gap_spot, list, i)
+                    if(color == BLACK):
+                        bfour = self.four_space(bfour, gap_spot, list, i)
+                    elif(color == WHITE):
+                        wfour = self.four_space(wfour,gap_spot,list,i)
                 elif (counter == 2 and self.get_color(list[i-1]) != 0 and i+1 < len(list)):
                     # print("i-3", self.get_color(list[i-3]))
                     # print("i-2", self.get_color(list[i-2]))
@@ -561,58 +568,33 @@ class GoBoard(object):
         #     cap_4w = cap_4b+cap_4w
         # if self.white_captures == 8:
         #     cap_4b = cap_4w+cap_4b
-        return [w5, b5, four, cap_4w, cap_4b, bblock, wblock, cap_black, cap_white]
+        return [w5, b5, bfour, wfour, cap_4w, cap_4b, bblock, wblock, cap_black, cap_white]
 
 
-    def five_space(self, w, b, empty, list, i, color, bblock, wblock,counter):
+    def five_space(self, fivemakingmoves, empty, list, i, block, counter):
             # if there is an empty space append it is the space that completes the block
-        if(color == BLACK):
-            if (empty > 0):
-                b.append(list[empty])
-                temp = []
-                for j in range(0,counter):
-                    temp.append(list[i-j])
-                #temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
-                if (list[empty] in temp):
-                    temp.remove(list[empty])
+        if (empty > 0):
+            fivemakingmoves.append(list[empty])
+            temp = []
+            for j in range(0,counter):
+                temp.append(list[i-j])
+            #temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
+            if (list[empty] in temp):
+                temp.remove(list[empty])
 
-                bblock.append(temp)
-                return [w,b,bblock,wblock]
+            block.append(temp)
+            return [fivemakingmoves,block]
             # if there is an empty space before or after the block add them
-            btemp = []
-            if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
-                btemp.append(list[i+1])
-            if (i-4 >= 0 and self.board[list[i-4]] == EMPTY):
-                btemp.append(list[i-4])
-            if(len(btemp) > 0):
-                bblock.append([list[i], list[i-1], list[i-2], list[i-3]])
-            b += btemp
+        btemp = []
+        if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
+            btemp.append(list[i+1])
+        if (i-4 >= 0 and self.board[list[i-4]] == EMPTY):
+            btemp.append(list[i-4])
+        if(len(btemp) > 0):
+            block.append([list[i], list[i-1], list[i-2], list[i-3]])
+        fivemakingmoves += btemp
 
-        elif(color == WHITE):
-            if(empty > 0):
-                # if there is an empty space append it is the space that completes the block
-                w.append(empty)
-                temp = []
-                for j in range(0,counter):
-                    temp.append(list[i-j])
-
-                #temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
-                if (list[empty] in temp):
-                    temp.remove(list[empty])
-
-                wblock.append(temp)
-                return [w,b,bblock,wblock]
-            # if there is an empty space before or after the block add them 
-            wtemp = []
-            if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
-                wtemp.append(list[i+1])
-            if(i-4 >= 0 and self.board[list[i-4]] == EMPTY):
-                wtemp.append(list[i-4]) 
-            if(len(wtemp) > 0):
-                wblock.append([list[i], list[i-1], list[i-2], list[i-3]])
-            w += wtemp
-
-        return [w, b, bblock, wblock]
+        return [fivemakingmoves, block]
 
     def four_space(self, four, empty, list, i):
        # print(four, empty, list, i, 5)
