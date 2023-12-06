@@ -49,6 +49,7 @@ class GoBoard(object):
         """
         assert 2 <= size <= MAXSIZE
         self.reset(size)
+        self.calculate_rows_cols_diags()
         self.black_captures = 0
         self.white_captures = 0
         self.depth = 0
@@ -67,6 +68,66 @@ class GoBoard(object):
             return self.black_captures
         elif color == WHITE:
             return self.white_captures
+        
+    def calculate_rows_cols_diags(self) -> None:
+        if self.size < 5:
+            return
+        # precalculate all rows, cols, and diags for 5-in-a-row detection
+        self.rows = []
+        self.cols = []
+        for i in range(1, self.size + 1):
+            current_row = []
+            start = self.row_start(i)
+            for pt in range(start, start + self.size):
+                current_row.append(pt)
+            self.rows.append(current_row)
+
+            start = self.row_start(1) + i - 1
+            current_col = []
+            for pt in range(start, self.row_start(self.size) + i, self.NS):
+                current_col.append(pt)
+            self.cols.append(current_col)
+
+        self.diags = []
+        # diag towards SE, starting from first row (1,1) moving right to (1,n)
+        start = self.row_start(1)
+        for i in range(start, start + self.size):
+            diag_SE = []
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_SE.append(pt)
+                pt += self.NS + 1
+            if len(diag_SE) >= 4:
+                self.diags.append(diag_SE)
+        # diag towards SE and NE, starting from (2,1) downwards to (n,1)
+        for i in range(start + self.NS, self.row_start(self.size) + 1, self.NS):
+            diag_SE = []
+            diag_NE = []
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_SE.append(pt)
+                pt += self.NS + 1
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_NE.append(pt)
+                pt += -1 * self.NS + 1
+            if len(diag_SE) >= 4:
+                self.diags.append(diag_SE)
+            if len(diag_NE) >= 4:
+                self.diags.append(diag_NE)
+        # diag towards NE, starting from (n,2) moving right to (n,n)
+        start = self.row_start(self.size) + 1
+        for i in range(start, start + self.size):
+            diag_NE = []
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_NE.append(pt)
+                pt += -1 * self.NS + 1
+            if len(diag_NE) >= 4:
+                self.diags.append(diag_NE)
+        assert len(self.rows) == self.size
+        assert len(self.cols) == self.size
+        assert len(self.diags) == (2 * (self.size - 4) + 1) * 2
     
     def reset(self, size: int) -> None:
         """
@@ -299,6 +360,258 @@ class GoBoard(object):
         else:
             return False, EMPTY
         
+    def detect_n_in_row(self):
+        # Checks for a group of n stones in the same direction on the board.
+        b5 = []
+        w5 = []
+        four = []
+        cap_for_b = []
+        cap_for_w = []
+        _ = []
+        blocks_of_opponent_fives = []
+        blocks_of_captures = []
+        lines = self.rows + self.cols + self.diags
+        current_color = self.current_player
+        for r in lines:
+            w5, b5, four, cap_4w, cap_4b, blocks_of_opponent_fives, cap_black, cap_white  = self.has_n_in_list(r, current_color)
+
+        wins = b5
+        blocks = w5
+        captures = cap_for_b
+        for x in cap_for_w:
+            if cap_for_w.count(x)*2 + self.white_captures >= 10:
+                blocks += [x]
+        captureBlocks_black = self.getCaptureBlocks(
+                blocks_of_opponent_fives, lines, current_color)
+        score = -len(wins)*10000000 + len(blocks)*10000000 - len(captureBlocks_black)*100 - len(four)*500 - len(captures)*10
+        # print(score)
+        return score
+
+    def getCaptureBlocks(self, opponent_fives, lines, cur_col):
+        capturable = []
+        for win in opponent_fives:
+            for i in win:
+                #print("move", self.moveFormatting([i]))
+                stone_lines = []  # all the lines the stone is a part of
+                for j in lines:
+                    for k in j:
+                        if i == k:
+                            stone_lines.append(j)
+                cap = self.identifyIfCapturable(stone_lines, i)
+                capturable += cap
+        return capturable
+
+    def identifyIfCapturable(self, lines, stone):
+        moves = []
+        y = len(lines)
+        newLines = []
+        for i in lines:
+            newLines.append(list(reversed(i)))
+        newLines += lines
+        for line in newLines:
+            index = line.index(stone)
+            #print(self.moveFormatting(line))
+            if index > 0 and index+2 < len(line):
+                i = line[index]
+                j = line[index+1]
+                k = line[index+2]
+                l = line[index-1]
+               #print(i, j, k, l)
+               #print(self.get_color(i), self.get_color(j),
+                     # self.get_color(k), self.get_color(l))
+
+                if self.get_color(j) == self.get_color(i):
+                    #print(1)
+                    if self.get_color(l) == opponent(self.get_color(i)):
+                        #print(2)
+                        if self.get_color(k) == 0:
+                            moves.append(k)
+        return moves
+
+    def has_n_in_list(self, list, current_color) -> GO_COLOR:
+        """
+        Checks if there are n stones in a row.
+        Returns BLACK or WHITE if any n in a rows exist in the list.
+        EMPTY otherwise.
+        """
+        prev = self.get_color(list[0])
+        counter = 1
+        gap_spot = 0
+        before_gap_counter = 0
+        b5 = []
+        w5 = []
+        four = []
+        cap_4b = []
+        cap_4w = []
+        # list of stones captured by white vvvv
+        cap_white = []
+        # list of stones captured by black vvvv
+        cap_black = []
+        blocks_of_opponent_fives = []
+        for i in range(1, len(list)):
+            color = self.get_color(list[i])
+            if color == prev:
+                # Matching stone
+                counter += 1
+            elif (gap_spot == 0 and color == EMPTY):
+                # there is a potential gap
+                gap_spot = i
+                before_gap_counter = counter  # store the number of stones before the gap
+            else:
+                # if there is a second gap ignore the first gap, set empty to the second gap, and subtract the number of stones before the first gap from the counter.
+                # this is so that we can keep the stones after the first gap but before the second gap in the count
+                if (color == EMPTY):
+                    gap_spot = i
+                    counter = counter - before_gap_counter
+                    before_gap_counter = counter
+                # there is a colour change, reset all vars
+                else:
+                    before_gap_counter = 0
+                    counter = 1
+                    gap_spot = 0
+                    prev = color
+            # if at the end of the board or there has been a colour change get the empty spaces
+            if (prev != EMPTY and prev != BORDER and (i+1 >= len(list) or self.get_color(list[i+1]) != color)):
+                # print("at end of board?", i, counter)
+                if (counter >= 4):
+                    w5, b5, blocks_of_opponent_fives = self.five_space(
+                        w5, b5, gap_spot, list, i, color, blocks_of_opponent_fives, current_color)
+                    
+                    # cap_block = self.capture_block(gap_spot,four_colour,list,i)
+                # only get fours if there are no fives and the color is correct
+                elif (counter == 3 and color == current_color):
+                    four = self.four_space(four, gap_spot, list, i)
+                elif (counter == 2 and self.get_color(list[i-1]) != 0 and i+1 < len(list)):
+                    # print("i-3", self.get_color(list[i-3]))
+                    # print("i-2", self.get_color(list[i-2]))
+                    # print("i-1", self.get_color(list[i-1]))
+                    # print("i", self.get_color(list[i]))
+                    # print("i+1", self.get_color(list[i]))
+                    # There is a possible capture
+                    if self.get_color(list[i-3])*self.get_color(list[i-2]) == 2 and color == 0 and i >= 3:
+                        '''
+                        Check if the pattern is opp,opp,opp,empty
+                        '''
+                        # The current stone is an empty spot and two stones back is an opponent of the two in a row
+                        if self.get_color(list[i-3]) == 2:
+                            # The lone opponent stone is whtie
+                            cap_4b += [list[i]]
+                            cap_black += [([list[i-2], list[i-1]],list[i])]
+                        else:
+                            # The lone opponent stone is black
+                            cap_4w += [list[i]]
+                            cap_white += [([list[i-2], list[i-1]],list[i])]
+                    elif self.get_color(list[i-3]) == 0 and self.get_color(list[i-1])*color == 2 and i >= 3:
+                        '''
+                        Check if the pattern is empty,opp,opp,opp
+                        '''
+                        # The current stone is an opponent of the 2 stones in a row and 3 stones back is an empty spot
+                        if color == 2:
+                            cap_4b += [list[i-3]]
+                            cap_black += [list[i-2], list[i-1]]
+                        else:
+                            cap_4w += [list[i-3]]
+                            cap_white += [list[i-2], list[i-1]]
+
+                    elif self.get_color(list[i-2]) == 0 and self.get_color(list[i+1])*color == 2 and i >= 2:
+
+                        # The current stone is an opponent of the 2 stones in a row and 3 stones back is an empty spot
+                        if color == 2:
+                            cap_4b += [list[i-2]]
+                            cap_black += [([list[i-1], list[i]],list[i-2])]
+                        else:
+                            cap_4w += [list[i-2]]
+                            cap_white += [list[i-1], list[i]]
+
+                    elif self.get_color(list[i+1]) == 0 and self.get_color(list[i-2])*color == 2 and i >= 2:
+
+                        # The current stone is an opponent of the 2 stones in a row and 3 stones back is an empty spot
+                        if self.get_color(list[i-1]) == 2:
+                            cap_4b += [list[i+1]]
+                            cap_black += [([list[i-1], list[i]],list[i+1])]
+                        else:
+                            cap_4w += [list[i+1]]
+                            cap_white += [list[i-1], list[i]]
+
+        # if cap_4w != []:
+        #     print("captured by white")
+        #     # for col in cap_4w:
+        #     #     print("Move", format_point(point_to_coord(col, self.size)))
+        #     for s in cap_white:
+        #         print(format_point(point_to_coord(s, self.size)))
+
+        # if cap_4b != []:
+        #     print("captured by black")
+        #     # for col in cap_4b:
+        #     #     #print("Move", format_point(point_to_coord(col, self.size)))
+        #     for s in cap_black:
+        #         print(format_point(point_to_coord(s, self.size)))
+        # print(blocks_of_opponent_fives)
+        # print("inside n_row", cap_4b, cap_4w)
+        # Code for identifying when there is a potential capture win for a player
+        # if self.black_captures == 8:
+        #     cap_4w = cap_4b+cap_4w
+        # if self.white_captures == 8:
+        #     cap_4b = cap_4w+cap_4b
+        return [w5, b5, four, cap_4w, cap_4b, blocks_of_opponent_fives, cap_black, cap_white]
+
+
+    def five_space(self, w, b, empty, list, i, block):
+            # if there is an empty space append it is the space that completes the block
+        bblock = []
+        wblock = []
+        if (empty > 0):
+            b.append(list[empty])
+            temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
+            if (list[empty] in temp):
+                temp.remove(list[empty])
+            # temp.remove(list[empty])
+            # temp.append(list[i-4])
+            bblock.append(temp)
+            return [w,b,block]
+        # if there is an empty space before or after the block add them 
+        if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
+            b.append(list[i+1])
+        if (i-4 >= 0 and self.board[list[i-4]] == EMPTY):
+            b.append(list[i-4])
+        if(len(b) > 0):
+            bblock.append([list[i], list[i-1], list[i-2], list[i-3]])
+        
+        
+        if(empty > 0):
+            # if there is an empty space append it is the space that completes the block
+            temp = [list[i], list[i-1], list[i-2], list[i-3], list[i-4]]
+            if (list[empty] in temp):
+                temp.remove(list[empty])
+            #temp.append(list[i-4])
+            wblock.append(temp)
+            return [w,b,block]
+        # if there is an empty space before or after the block add them 
+        if(i+1 < len(list) and self.board[list[i+1]] == EMPTY):
+            w.append(list[i+1])
+        if(i-4 >= 0 and self.board[list[i-4]] == EMPTY):
+            w.append(list[i-4]) 
+        if(len(w) > 0):
+            wblock.append([list[i], list[i-1], list[i-2], list[i-3]])
+
+        return [w, b, bblock, wblock]
+
+    def four_space(self, four, empty, list, i):
+       # print(four, empty, list, i, 5)
+        # if there is an empty space append it is the space that completes the block
+        if (empty > 0):
+            four.append(list[empty])
+            return four
+        # if there are at least 2 empty spaces to a side of the block add the first empty space e.g add ..XXX not O.XXX
+
+        if (i+2 < len(list) and self.board[list[i+1]] == EMPTY and self.board[list[i+2]] == EMPTY):
+            four.append(list[i+1])
+        if (i-3-1 >= 0 and self.board[list[i-3]] == EMPTY and self.board[list[i-3-1]] == EMPTY):
+            four.append(list[i-3])
+        # for f in four:
+        #     print(format_point(point_to_coord(list[f], 5)))
+        return four
+        
     def get_result_number(self):
         """
         Returns: is_terminal, winner
@@ -312,7 +625,7 @@ class GoBoard(object):
         elif self.end_of_game():
             return 0
         else:
-            return False, EMPTY
+            return 0
 
     def is_terminal(self):
         winner = self.detect_five_in_a_row()

@@ -191,6 +191,7 @@ class GtpConnection:
 
     def clear_board_cmd(self, args: List[str]) -> None:
         """ clear the board """
+        self.mcts = MCTS()
         self.reset(self.board.size)
         self.respond()
 
@@ -357,13 +358,19 @@ class GtpConnection:
         """ We already implemented this function for Assignment 2 """
         self.respond(str(self.board.get_captures(WHITE))+' '+str(self.board.get_captures(BLACK)))
 
+    def update(self, move: GO_POINT) -> None:
+        self.parent = self.mcts.root
+        self.mcts.update_with_move(move)
+
     def genmove_cmd(self, args: List[str]) -> None:
         """ 
         Modify this function for Assignment 2.
         """
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.mcts.get_move(self.board, color, 10, 100)
+        move = self.mcts.get_move(self.board, color, 10, 1.4)
+        self.mcts.print_pi(self.board)
+        self.update(move)
         self.respond(point_to_coord(move,7).lower())
     
     def timelimit_cmd(self, args: List[str]) -> None:

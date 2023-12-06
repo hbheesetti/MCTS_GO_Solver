@@ -3,7 +3,7 @@ feature_moves.py
 Move generation based on simple features.
 """
 from board_base import GO_COLOR, GO_POINT, NO_POINT
-from board import GoBoard, get_result_number
+from board import GoBoard
 # from board_score import winner
 from board_util import GoBoardUtil, PASS
 # from feature import Features_weight
@@ -66,7 +66,7 @@ class FeatureMoves(object):
         """
         # komi = kwargs.pop("komi", 0)
         # limit = kwargs.pop("limit", 1000)
-        simulation_policy = "random"
+        # simulation_policy = "random"
         # use_pattern = kwargs.pop("use_pattern", True)
         # check_selfatari = kwargs.pop("check_selfatari", True)
 
@@ -79,8 +79,7 @@ class FeatureMoves(object):
         nuPasses = 0
         for _ in range(limit):
             color = board.current_player
-            if simulation_policy == "random":
-                move = GoBoardUtil.generate_random_move(board, color, True)
+            move = GoBoardUtil.generate_random_move(board, color, True)
             # elif simulation_policy == "rulebased":
             #     move = PatternUtil.generate_move_with_filter(
             #         board, use_pattern, check_selfatari
@@ -95,4 +94,5 @@ class FeatureMoves(object):
                 nuPasses = 0
             if nuPasses >= 2:
                 break
-        return board.get_result_number()
+        # return board.detect_n_in_row()
+        return board.detect_n_in_row()

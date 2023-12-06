@@ -85,9 +85,13 @@ class TreeNode:
         best_child = None
         list = []
         for move, child in self.children.items():
-            if child.n_visits >= _n_visits:
+            if child.n_visits > _n_visits:
+                list.clear()
                 _n_visits = child.n_visits
                 list.append(child)
+            elif child.n_visits == _n_visits:
+                list.append(child)
+        print(list)
         best_child = random.choice(list)
         return best_child.move, best_child
     
@@ -126,9 +130,6 @@ class MCTS:
         # This will be True olny once for the root
         if not node.expanded:
             node.expand(board, color)
-        # print("children", node.children)
-        # print("points", board.get_empty_points())
-        # and len(board.get_empty_points()) == 0
         while not node.is_leaf() :
             move, next_node = node.select_in_tree(self.exploration)
             assert board.play_move(move, color)
@@ -138,7 +139,7 @@ class MCTS:
             node.expand(board, color)
 
         if node.is_leaf():
-            print(node.level)
+            print("leaf", node.level)
         
         assert board.current_player == color
         winner = self.rollout(board, color)
@@ -149,16 +150,11 @@ class MCTS:
         Use the rollout policy to play until the end of the game, returning the winner of the game
         +1 if black wins, +2 if white wins, 0 if it is a tie.
         """
-        winner = FeatureMoves.playGame(
+        score = FeatureMoves.playGame(
             board,
-            color,
-            # komi=self.komi,
-            # limit=self.limit,
-            # random_simulation=self.simulation_policy,
-            # use_pattern=self.use_pattern,
-            # check_selfatari=self.check_selfatari,
+            color
         )
-        return winner
+        return winner(score)
     
     def get_move(
         self,
@@ -180,13 +176,11 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        for _ in range(num_simulation*len(self.root.children)*10):
+        for _ in range(num_simulation*len(self.root.children)*100):
             cboard = board.copy()
             # print(board.get_empty_points())
             self.search(cboard, color)
         # choose a move that has the most visit
-        for i in self.root.children:
-            print(i, self.root.children[i].n_visits)
         best_move, best_child = self.root.select_best_child()
         return best_move
     
@@ -216,3 +210,11 @@ class MCTS:
                 sys.stderr.write(s)
             sys.stderr.write("\n")
         sys.stderr.flush()
+
+def winner(score) -> GO_COLOR:
+    if score > 0:
+        return BLACK
+    elif score < 0:
+        return WHITE
+    else:
+        return 0
