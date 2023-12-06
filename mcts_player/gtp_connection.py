@@ -368,7 +368,7 @@ class GtpConnection:
         """
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.mcts.get_move(self.board, color, 10, 1.4)
+        move = self.mcts.get_move(self.board, color, 100, 1.41)
         self.mcts.print_pi(self.board)
         self.update(move)
         self.respond(point_to_coord(move,7).lower())
