@@ -50,10 +50,9 @@ class SimulationPlayer(object):
         MoveType: {"Win", "BlockWin", "OpenFour", "Capture", "Random"}
         MoveList: an unsorted List[int], each element is a move
         """
-        if rand == False:
-            rule, moves = board.detect_n_in_row(color)
-            if len(moves) > 0:
-                return rule, moves
+        rule, moves = board.detect_n_in_row(color)
+        if len(moves) > 0:
+            return rule, moves
         result = board.get_empty_points()
         res = result.tolist()
         return "Random", res

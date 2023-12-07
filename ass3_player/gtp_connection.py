@@ -367,7 +367,6 @@ class GtpConnection:
         Modify this function for Assignment 2.
         """
         gen_color = args[0].lower()
-        print(len(self.board.get_empty_points()))
         if (len(self.board.get_empty_points()) == 49):
             self.respond("d4")
         else:
