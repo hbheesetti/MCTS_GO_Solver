@@ -11,7 +11,7 @@ Implements a basic Go board with functions to:
 The board uses a 1-dimensional representation with padding
 """
 
-import numpy as np
+import numpy as np f
 from typing import List, Tuple
 
 from board_base import (

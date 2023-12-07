@@ -23,6 +23,14 @@ from board_base import (
 )
 
 
+import signal
+def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
+    class TimeoutError(Exception):
+        pass
+
+def handler(signum, frame):
+    raise TimeoutError()
+    # set the timeout handler
 
 class SimulationPlayer(object):
     def __init__(self, numSimulations):
@@ -32,17 +40,26 @@ class SimulationPlayer(object):
         return "Simulation Player ({0} sim.)".format(self.numSimulations)
 
     def genmove(self, state, color, rand):
-        assert not state.endOfGame()
-        rule, moves = self.ruleBasedMoves(state, color, rand)
-        numMoves = len(moves)
-        score = [0] * numMoves
-        for i in range(numMoves):
-            move = moves[i]
-            score[i] = self.simulate(state, move, rand)
-        bestIndex = score.index(max(score))
-        best = moves[bestIndex]
-        assert best in state.legalMoves()
-        return best
+        def handler(s, f):
+            raise TimeoutError("timedout")
+        try:
+            signal.signal(signal.SIGALRM, handler) 
+            signal.alarm(int(55))
+            assert not state.endOfGame()
+            rule, moves = self.ruleBasedMoves(state, color, rand)
+            numMoves = len(moves)
+            score = [0] * numMoves
+            for i in range(numMoves):
+                move = moves[i]
+                score[i] = self.simulate(state, move, rand)
+            bestIndex = score.index(max(score))
+            best = moves[bestIndex]
+            assert best in state.legalMoves()
+        except Exception as exc:
+            best = random.choice(state.legalMoves())
+        finally:
+            signal.alarm(0)
+            return best
 
     def ruleBasedMoves(self, board: GoBoard, color, rand: bool) -> Tuple[str, List[int]]:
         """
