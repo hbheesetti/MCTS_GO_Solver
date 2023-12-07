@@ -419,6 +419,8 @@ class GoBoard(object):
         wthree = []
         cap_for_b = []
         cap_for_w = []
+        btwo = []
+        wtwo = []
         _ = []
         bblock = []
         wblock = []
@@ -435,11 +437,14 @@ class GoBoard(object):
             wblock += rows[7]
             bthree += rows[8]
             wthree += rows[9]
+            btwo += rows[10]
+            wtwo += rows[11]
         if current_color == BLACK:
             wins = b5
             blocks = w5
             blocks_of_opponent_fives = wblock
             four = bfour
+            two = btwo
             ofour = wfour
             three = bthree
             othree = wthree
@@ -454,6 +459,7 @@ class GoBoard(object):
             four = wfour
             ofour = bfour
             three = wthree
+            two = wtwo
             othree = bthree
             captures = cap_for_w
             for x in cap_for_b:
@@ -476,6 +482,8 @@ class GoBoard(object):
             return "OpenFour", four
         elif len(captures) > 0:
             return "Capture", captures
+        elif len(two) > 0:
+            return "two", two
         return "none", []
         # if (len(wins) > 0):
         #     return "Win", wins
@@ -569,6 +577,8 @@ class GoBoard(object):
         wfour = []
         bthree = []
         wthree = []
+        btwo = []
+        wtwo = []
         cap_4b = []
         cap_4w = []
         for i in range(1, len(list)):
@@ -606,14 +616,14 @@ class GoBoard(object):
                 # only get fours if there are no fives and the color is correct
                 elif (counter == 3):
                     if(color == BLACK):
-                        bfour = self.fourthree_space(bfour,gap_spot,list,i,3)
+                        bfour = self.fourtwo_space(bfour,gap_spot,list,i,3)
                     elif(color == WHITE):
-                        wfour = self.fourthree_space(wfour,gap_spot,list,i,3)
+                        wfour = self.fourtwo_space(wfour,gap_spot,list,i,3)
                 elif (counter == 2):
                     if(color == BLACK):
-                        bthree = self.fourthree_space(bthree,gap_spot,list,i,2)
+                        bthree = self.three_space(bthree,gap_spot,list,i)
                     elif(color == WHITE):
-                        wthree = self.fourthree_space(wthree,gap_spot,list,i,2)
+                        wthree = self.three_space(wthree,gap_spot,list,i)
                     
                     if(self.get_color(list[i-1]) != 0 and i+1 < len(list)):
                         # There is a possible capture
@@ -653,8 +663,12 @@ class GoBoard(object):
                                 cap_4b += [list[i+1]]
                             else:
                                 cap_4w += [list[i+1]]
-
-        return [w5, b5, bfour, wfour, cap_4w, cap_4b, bblock, wblock, bthree,wthree]
+                elif (counter == 1):
+                    if(color == BLACK):
+                        btwo = self.fourtwo_space(btwo,-1,list,i,1)
+                    elif(color == WHITE):
+                        wtwo = self.fourtwo_space(wtwo,-1,list,i,1)
+        return [w5, b5, bfour, wfour, cap_4w, cap_4b, bblock, wblock, bthree,wthree,btwo,wtwo]
         
     
     '''
@@ -720,22 +734,34 @@ class GoBoard(object):
         fivemakingmoves += btemp
         return [fivemakingmoves, block]
 
-    def fourthree_space(self, spacesList, empty, list, i,num):
+    def fourtwo_space(self, spacesList, empty, list, i,num):
        # print(four, empty, list, i, 5)
         # if there is an empty space append it is the space that completes the block
         if (empty > 0):
             spacesList.append(list[empty])
             return spacesList
         # if there are at least 2 empty spaces to a side of the block add the first empty space e.g add ..XXX not O.XXX
-
-        if (i+2 < len(list) and self.board[list[i+1]] == EMPTY and self.board[list[i+2]] == EMPTY):
+        if (i+2 < len(list) and i-num-1 >= 0 and self.board[list[i+1]] == EMPTY and self.board[list[i+2]] == EMPTY and self.board[list[i-num]] == EMPTY and self.board[list[i-num-1]] == EMPTY):
             spacesList.append(list[i+1])
-        if (i-num-1 >= 0 and self.board[list[i-num]] == EMPTY and self.board[list[i-num-1]] == EMPTY):
             spacesList.append(list[i-num])
         # for f in four:
         #     print(format_point(point_to_coord(list[f], 5)))
         return spacesList
 
+    def three_space(self, spacesList, empty, list, i):
+        if (empty > 0):
+            spacesList.append(list[empty])
+            return spacesList
+        if(i+1 >= len(list) or i-2 < 0):
+            return spacesList
+        if (self.board[list[i+1]] == EMPTY):
+            spacesList.append(list[i+1])
+        if (self.board[list[i-2]] == EMPTY):
+            spacesList.append(list[i-2])
+        # for f in four:
+        #     print(format_point(point_to_coord(list[f], 5)))
+        return spacesList
+    
     def capture_block(self, gap, colour, list, i):
         """start = list[i-4] # get start of the block
         end = list[i]
