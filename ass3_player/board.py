@@ -443,17 +443,19 @@ class GoBoard(object):
             for x in cap_for_b:
                 if cap_for_b.count(x)*2 + self.black_captures >= 10:
                     blocks += [x]
-        if (len(wins) > 0):
-            return "Win", wins
-        elif len(blocks) > 0:
-            captureBlocks = self.getCaptureBlocks(
-                blocks_of_opponent_fives, lines, current_color)
-            return "BlockWin", blocks+captureBlocks
-        elif len(four) > 0:
-            return "OpenFour", four
-        elif len(captures) > 0:
-            return "Capture", captures
-        return "none", []
+        captureBlocks = self.getCaptureBlocks(blocks_of_opponent_fives, lines, current_color)
+        return _,wins+blocks+captureBlocks+four+captures
+        # if (len(wins) > 0):
+        #     return "Win", wins
+        # elif len(blocks) > 0:
+        #     captureBlocks = self.getCaptureBlocks(
+        #         blocks_of_opponent_fives, lines, current_color)
+        #     return "BlockWin", blocks+captureBlocks
+        # elif len(four) > 0:
+        #     return "OpenFour", four
+        # elif len(captures) > 0:
+        #     return "Capture", captures
+        # return "none", []
 
     def getCaptureBlocks(self, opponent_fives, lines, cur_col):
         capturable = []

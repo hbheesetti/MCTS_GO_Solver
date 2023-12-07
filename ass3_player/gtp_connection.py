@@ -46,7 +46,7 @@ class GtpConnection:
         self.go_engine = go_engine
         self.board: GoBoard = board
         self.policy_random = True
-        self.simulatedPlayer = SimulationPlayer(10)
+        self.simulatedPlayer = SimulationPlayer(1000)
         self.commands: Dict[str, Callable[[List[str]], None]] = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -367,11 +367,15 @@ class GtpConnection:
         Modify this function for Assignment 2.
         """
         gen_color = args[0].lower()
-        color = color_to_int(gen_color)
-        move = self.simulatedPlayer.genmove(self.board, color, self.policy_random)
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        self.respond(move_as_string)
+        print(len(self.board.get_empty_points()))
+        if (len(self.board.get_empty_points()) == 49):
+            self.respond("d4")
+        else:
+            color = color_to_int(gen_color)
+            move = self.simulatedPlayer.genmove(self.board, color, self.policy_random)
+            move_coord = point_to_coord(move, self.board.size)
+            move_as_string = format_point(move_coord)
+            self.respond(move_as_string)
        
     def set_policy_cmd(self, args:List[str]) -> None:
         if(len(args) < 1):
