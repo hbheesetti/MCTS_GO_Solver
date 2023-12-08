@@ -73,13 +73,13 @@ class FeatureMoves(object):
         '''
         Limit - the maximum number of simulations to be run
         '''
-        limit = 100
+        limit = len(board.get_empty_points())
         # if kwargs:
         #     raise TypeError("Unexpected **kwargs: %r" % kwargs)
         nuPasses = 0
         for _ in range(limit):
             color = board.current_player
-            move = GoBoardUtil.generate_random_move(board, color, True)
+            _, list = board.detect_n_in_row_move(color)
             # elif simulation_policy == "rulebased":
             #     move = PatternUtil.generate_move_with_filter(
             #         board, use_pattern, check_selfatari
@@ -87,12 +87,10 @@ class FeatureMoves(object):
             # else:
             #     assert simulation_policy == "prob"
             #     move = FeatureMoves.generate_move(board)
+            if len(list) > 0:
+                move = random.choice(list)
+            if len(list) == 0:
+                move  = GoBoardUtil.generate_random_move(board)
             board.play_move(move, color)
-            if move == PASS:
-                nuPasses += 1
-            else:
-                nuPasses = 0
-            if nuPasses >= 2:
-                break
         # return board.detect_n_in_row()
-        return board.detect_n_in_row()
+        return board.staticallyEvaluateForToPlay()

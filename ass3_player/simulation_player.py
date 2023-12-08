@@ -56,6 +56,7 @@ class SimulationPlayer(object):
             best = moves[bestIndex]
             assert best in state.legalMoves()
         except Exception as exc:
+            print("timed out")
             best = random.choice(state.legalMoves())
         finally:
             signal.alarm(0)
@@ -78,13 +79,15 @@ class SimulationPlayer(object):
         num_wins = 0
         num_draws = 0
         cur_player = state.current_player
-        for _ in range(self.numSimulations):
+        for i in range(self.numSimulations):
             board_copy = state.copy()
             board_copy.play_move(move, state.current_player)
             winner = board_copy.detect_five_in_a_row()
             while winner == EMPTY and len(board_copy.get_empty_points()) != 0:
-                rule, moves = self.ruleBasedMoves(
-                    board_copy, board_copy.current_player, rand)
+                if i < 4:
+                    rule, moves = self.ruleBasedMoves(board_copy, board_copy.current_player, rand)
+                else:
+                    moves = board_copy.get_empty_points()
                 # print(self.moveFormatting(moves))
                 random_move = random.choice(moves)
                 board_copy.play_move(random_move, board_copy.current_player)

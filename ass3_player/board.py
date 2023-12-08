@@ -50,7 +50,7 @@ class GoBoard(object):
         Creates a Go board of given size
         """
         assert 2 <= size <= MAXSIZE
-        self.reset(size)
+        self.reset(7)
         self.calculate_rows_cols_diags()
         self.black_captures = 0
         self.white_captures = 0
@@ -468,23 +468,23 @@ class GoBoard(object):
         # o = opponent
         intersect = self.identifyJoiningOverlap(four+three)
         ointersect = self.identifyJoiningOverlap(ofour+othree)
+        # return wins+blocks+captureBlocks+intersect+ointersect+four+captures+two
         if (len(wins) > 0):
             return "Win", wins
         elif len(blocks) > 0:
             captureBlocks = self.getCaptureBlocks(
                 blocks_of_opponent_fives, lines, current_color)
             return "BlockWin", blocks+captureBlocks
-        elif len(intersect) > 0:
-            return "intersect", intersect 
-        elif len(ointersect) > 0:
-            return "block intersect", ointersect
-        elif len(four) > 0:
-            return "OpenFour", four
-        elif len(captures) > 0:
-            return "Capture", captures
-        elif len(two) > 0:
-            return "two", two
+        elif len(four) > 0 or len(intersect) > 0:
+            return "OpenFour", four+intersect
+        elif len(ofour) > 0 or len(ointersect) > 0:
+            return "OpenFour", ofour+ointersect
+        elif len(three) > 0 or len(othree) > 0:
+            return "three", three+othree
+        elif len(captures) > 0 or len(two) > 0:
+            return "Capture", captures+ two
         return "none", []
+        ######
         # if (len(wins) > 0):
         #     return "Win", wins
         # elif len(blocks) > 0:
@@ -741,8 +741,9 @@ class GoBoard(object):
             spacesList.append(list[empty])
             return spacesList
         # if there are at least 2 empty spaces to a side of the block add the first empty space e.g add ..XXX not O.XXX
-        if (i+2 < len(list) and i-num-1 >= 0 and self.board[list[i+1]] == EMPTY and self.board[list[i+2]] == EMPTY and self.board[list[i-num]] == EMPTY and self.board[list[i-num-1]] == EMPTY):
+        if (i+2 < len(list) and self.board[list[i+1]] == EMPTY and self.board[list[i+2]] == EMPTY):
             spacesList.append(list[i+1])
+        if(i-num-1 >= 0 and self.board[list[i-num]] == EMPTY and self.board[list[i-num-1]] == EMPTY):
             spacesList.append(list[i-num])
         # for f in four:
         #     print(format_point(point_to_coord(list[f], 5)))

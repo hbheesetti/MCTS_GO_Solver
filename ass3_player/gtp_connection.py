@@ -368,10 +368,14 @@ class GtpConnection:
         """
         gen_color = args[0].lower()
         if (len(self.board.get_empty_points()) == 49):
+            row, col = move_to_coord("d4", self.board.size)
+            point = coord_to_point(row, col, self.board.size)
+            self.board.play_move(point, 1)
             self.respond("d4")
         else:
             color = color_to_int(gen_color)
             move = self.simulatedPlayer.genmove(self.board, color, self.policy_random)
+            self.board.play_move(move, color)
             move_coord = point_to_coord(move, self.board.size)
             move_as_string = format_point(move_coord)
             self.respond(move_as_string)

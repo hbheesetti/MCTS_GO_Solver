@@ -1,5 +1,5 @@
-player 1: random_player/Ninuki-random.py
+player 1: ab_player/Ninuki-ab.py
 player 2: ass3_player/Ninuki.py
-player 1 wins 1
-player 2 wins 0
+player 1 wins 3
+player 2 wins 7
 draw 0

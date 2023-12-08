@@ -4,3 +4,13 @@
 
 /.vs
 /env
+ab_player/__pycache__/board_base.cpython-38.pyc
+ab_player/__pycache__/board_util.cpython-38.pyc
+ab_player/__pycache__/board.cpython-38.pyc
+ab_player/__pycache__/engine.cpython-38.pyc
+ab_player/__pycache__/gtp_connection.cpython-38.pyc
+random_player/__pycache__/board_base.cpython-38.pyc
+random_player/__pycache__/board_util.cpython-38.pyc
+random_player/__pycache__/board.cpython-38.pyc
+random_player/__pycache__/engine.cpython-38.pyc
+random_player/__pycache__/gtp_connection.cpython-38.pyc

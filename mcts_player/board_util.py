@@ -33,8 +33,7 @@ class GoBoardUtil(object):
         return legal_moves
 
     @staticmethod
-    def generate_random_move(board: GoBoard, color: GO_COLOR, 
-                             use_eye_filter: bool) -> GO_POINT:
+    def generate_random_move(board: GoBoard) -> GO_POINT:
         """
         Generate a random move.
         Return PASS if no move found
@@ -46,7 +45,7 @@ class GoBoardUtil(object):
         color : BLACK, WHITE
             the color to generate the move for.
         """
-        moves = board.get_empty_points() + [-2]
+        moves = board.get_empty_points() 
         if len(moves) > 0:
             return random.choice(moves)
 

@@ -177,12 +177,13 @@ class MCTS:
         if not self.root.expanded:
             self.root.expand(board, color)
 
-        for _ in range(num_simulation*len(self.root.children)*10):
+        for _ in range(num_simulation*len(self.root.children)):
             cboard = board.copy()
             # print(board.get_empty_points())
             self.search(cboard, color)
         # choose a move that has the most visit
         best_move, best_child = self.root.select_best_child()
+        board.play_move(best_move, color)
         return best_move
     
     def update_with_move(self, last_move: GO_POINT) -> None:
